@@ -1,0 +1,3 @@
+# mongoball
+
+MongoDB + Baseball data
