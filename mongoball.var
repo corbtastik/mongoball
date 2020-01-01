@@ -1,0 +1,2 @@
+MONGODB_HOST=localhost:27017
+MONGOBALL_DB=mongoball
