@@ -36,36 +36,35 @@ MONGOBALL_DB=mongoball
 
 Each [baseballdatabank](https://github.com/chadwickbureau/baseballdatabank) file is loaded as a [Collection](https://docs.mongodb.com/manual/core/databases-and-collections/) in the database `$MONGOBALL_DB`.
 
-| Collection  | Documents |
-| ------------- | ------------- |
-| allStar  | 5291  |
-| appearances  | 107357  |
-| awardsManagers | 179 |
-| awardsPlayers | 6236 |
-| awardsShareManagers | 425 |
-| awardsSharePlayers | 6879 |
-| batting | 107429 |
-| battingPost | 14750 |
-| collegePlaying | 17350 |
-| fielding | 143046 |
-| fieldingOF | 12028 |
-| fieldingOFsplit | 33279 |
-| fieldingPost | 13938 |
-| hallOfFame | 4191 |
-| homeGames | 3108 |
-| managers | 3536 |
-| managersHalf | 93 |
-| parks | 252 |
-| people | 19878 |
-| pitching | 47628 |
-| pitchingPost | 5798 |
-| salaries | 26428 |
-| schools | 1207 |
-| seriesPost | 343 |
-| teams | 2925 |
-| teamsFranchises | 120 |
-| teamsHalf | 52 |
+```txt
+| Collection  | Documents | | |
+| ------------- | ------------- | -- | --- |
+| allStar  | 5291  | fielding | 143046 | people | 19878 |
+| appearances  | 107357  | fieldingOF | 12028 | pitching | 47628 |
+| awardsManagers | 179 | fieldingOFsplit | 33279 | pitchingPost | 5798 |
+| awardsPlayers | 6236 | fieldingPost | 13938 | salaries | 26428 |
+| awardsShareManagers | 425 | hallOfFame | 4191 | schools | 1207 |
+| awardsSharePlayers | 6879 | homeGames | 3108 | seriesPost | 343 |
+| batting | 107429 | managers | 3536 | teams | 2925 |
+| battingPost | 14750 | managersHalf | 93 | teamsFranchises | 120 |
+| collegePlaying | 17350 | parks | 252 | teamsHalf | 52 |
+```
 
+### Queries
+
+1. Find Jackie Robinson and Babe Ruth
+
+```javascript
+db.people.find({ nameFirst: "Jackie", nameLast: "Robinson"}).pretty()
+db.people.find({nameFirst: "Babe", nameLast: "Ruth"}).pretty()
+```
+
+2. Find the player with most homers in a single season, output only playerId, yearId and homeRuns.
+
+```javascript
+// using sort and limit
+db.batting.find({}, {"_id":1, "playerId":1, "yearId":1, "homeRuns":1}).sort({homeRuns:-1}).limit(1).pretty()
+```
 
 ### References
 
