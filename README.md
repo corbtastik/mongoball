@@ -37,17 +37,17 @@ MONGOBALL_DB=mongoball
 Each [baseballdatabank](https://github.com/chadwickbureau/baseballdatabank) file is loaded as a [Collection](https://docs.mongodb.com/manual/core/databases-and-collections/) in the database `$MONGOBALL_DB`.
 
 ```txt
-| Collection  | Documents | | |
-| ------------- | ------------- | -- | --- |
-| allStar  | 5291  | fielding | 143046 | people | 19878 |
-| appearances  | 107357  | fieldingOF | 12028 | pitching | 47628 |
-| awardsManagers | 179 | fieldingOFsplit | 33279 | pitchingPost | 5798 |
-| awardsPlayers | 6236 | fieldingPost | 13938 | salaries | 26428 |
-| awardsShareManagers | 425 | hallOfFame | 4191 | schools | 1207 |
-| awardsSharePlayers | 6879 | homeGames | 3108 | seriesPost | 343 |
-| batting | 107429 | managers | 3536 | teams | 2925 |
-| battingPost | 14750 | managersHalf | 93 | teamsFranchises | 120 |
-| collegePlaying | 17350 | parks | 252 | teamsHalf | 52 |
+| ------------------- | ------ | --------------- | ------ | --------------- | ----- |
+| allStar             | 5291   | fielding        | 143046 | people          | 19878 |
+| appearances         | 107357 | fieldingOF      | 12028  | pitching        | 47628 |
+| awardsManagers      | 179    | fieldingOFsplit | 33279  | pitchingPost    | 5798  |
+| awardsPlayers       | 6236   | fieldingPost    | 13938  | salaries        | 26428 |
+| awardsShareManagers | 425    | hallOfFame      | 4191   | schools         | 1207  |
+| awardsSharePlayers  | 6879   | homeGames       | 3108   | seriesPost      | 343   |
+| batting             | 107429 | managers        | 3536   | teams           | 2925  |
+| battingPost         | 14750  | managersHalf    | 93     | teamsFranchises | 120   |
+| collegePlaying      | 17350  | parks           | 252    | teamsHalf       | 52    |
+| ------------------- | ------ | --------------- | ------ | --------------- | ----- |
 ```
 
 ### Queries
