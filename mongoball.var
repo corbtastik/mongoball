@@ -1,2 +1,2 @@
-MONGODB_HOST=localhost:27017
+MONGODB_HOST=mongomini.retro.io:27017
 MONGOBALL_DB=mongoball

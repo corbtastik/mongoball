@@ -66,6 +66,49 @@ db.people.find({nameFirst: "Babe", nameLast: "Ruth"}).pretty()
 db.batting.find({}, {"_id":1, "playerId":1, "yearId":1, "homeRuns":1}).sort({homeRuns:-1}).limit(1).pretty()
 ```
 
+### Data Access Patterns
+
+```json
+{
+	"_id" : ObjectId("5e63af3bff5e503ecc0a4782"),
+	"playerId" : "ruthba01",
+	"birthYear" : 1895,
+	"birthMonth" : 2,
+	"birthDay" : 6,
+	"birthCountry" : "USA",
+	"birthState" : "MD",
+	"birthCity" : "Baltimore",
+	"deathYear" : 1948,
+	"deathMonth" : 8,
+	"deathDay" : 16,
+	"deathCountry" : "USA",
+	"deathState" : "NY",
+	"deathCity" : "New York",
+	"nameFirst" : "Babe",
+	"nameLast" : "Ruth",
+	"nameGiven" : "George Herman",
+	"weight" : 215,
+	"height" : 74,
+	"bats" : "L",
+	"throws" : "L",
+	"debut" : ISODate("1914-07-11T00:00:00Z"),
+	"finalGame" : ISODate("1935-05-30T00:00:00Z"),
+	"retroId" : "ruthb101",
+	"bbrefId" : "ruthba01"
+}
+{
+	"_id" : ObjectId("5e63af39b225d551b6748bc2"),
+	"playerId" : "ruthba01",
+	"yearId" : 1936,
+	"votedBy" : "BBWAA",
+	"ballots" : 226,
+	"needed" : 170,
+	"votes" : 215,
+	"inducted" : "Y",
+	"category" : "Player"
+}
+```
+
 ### References
 
 1. [MongoDB](https://mongodb.com)

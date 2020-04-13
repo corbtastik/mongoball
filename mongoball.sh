@@ -45,9 +45,9 @@ function importCollection {
     local file=$3
     local importArgs=( "--host=${MONGODB_HOST}" )
 
-    if [ "$MONGODB_HOST" != "localhost:27017" ]; then
-       importArgs+=( "--ssl" )
-    fi
+    # if [ "$MONGODB_HOST" != "localhost:27017" ]; then
+    #    importArgs+=( "--ssl" )
+    # fi
 
     importArgs+=( "--authenticationDatabase=${MONGODB_AUTHDB}" )
     importArgs+=( "--username=${MONGODB_USER}" )
