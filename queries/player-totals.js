@@ -1,5 +1,5 @@
 db.players.aggregate(
-    [{$match: {
+    [   {$match: {
       nameFirst: 'Babe',
       nameLast: 'Ruth'
     }}, {$lookup: {
@@ -50,5 +50,5 @@ db.players.aggregate(
       sacrificeHits: {
         $sum: '$batting.sacrificeHits'
       }
-    }}]
+    }}   ]
 )

@@ -34,10 +34,10 @@ db.people.aggregate([
         }
   }, {
     '$lookup': {
-      'from': 'batting',
+      'from': 'pitching',
       'localField': '_id',
       'foreignField': 'playerId',
-      'as': 'batting'
+      'as': 'pitching'
     }
   }, {
     '$merge': 'players'
