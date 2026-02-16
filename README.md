@@ -1,6 +1,6 @@
-# MLB Season Data Downloader
+# Mongoball
 
-Download complete MLB season data from [Retrosheet](https://www.retrosheet.org) and [Baseball Savant](https://baseballsavant.mlb.com) (Statcast).
+Download complete MLB data from [Retrosheet](https://www.retrosheet.org), [Baseball Savant](https://baseballsavant.mlb.com) (Statcast), and the [Lahman Baseball Database](https://sabr.org/lahman-database/) into MongoDB.
 
 ## Quick Start
 
@@ -8,6 +8,19 @@ Download complete MLB season data from [Retrosheet](https://www.retrosheet.org) 
 # Install dependencies
 npm install
 
+# Full workflow: download, migrate, and verify (recommended)
+./scripts/full-workflow.sh 2023
+
+# Full workflow with Lahman data
+./scripts/full-workflow.sh 2023 --with-lahman
+
+# Full workflow with custom MongoDB
+./scripts/full-workflow.sh 2023 --uri "mongodb://user:pass@host:27017" --database mlb
+```
+
+### Individual Commands
+
+```bash
 # Download everything for a season
 npm run download -- 2023
 
@@ -20,11 +33,17 @@ npm run download -- 2019 --no-statcast
 # Download only Statcast (2015+ only)
 npm run download -- 2024 --statcast-only
 
-# Include reference data (biographical, ejections)
-npm run download -- 2023 --include-reference
+# Download Lahman database (awards, HOF, salaries, historical stats)
+npm run download -- --lahman-only
 
-# Download to a specific directory
-npm run download -- 2023 -o /path/to/data
+# Download season + Lahman data
+npm run download -- 2023 --lahman
+
+# Migrate to MongoDB
+npm run migrate -- --years 2023
+
+# Verify data with test queries
+npm run verify -- --year 2023
 ```
 
 ### Requirements
@@ -36,8 +55,9 @@ npm run download -- 2023 -o /path/to/data
 
 | Source | Years | Notes |
 |--------|-------|-------|
-| Retrosheet | 1871-present | Older years may have fewer file types |
-| Statcast | 2015-present | Pitch tracking began in 2015 |
+| Retrosheet | 1871-present | Game logs, play-by-play, rosters |
+| Statcast | 2015-present | Pitch-by-pitch tracking data |
+| Lahman | 1871-present | Season stats, awards, HOF, salaries |
 | Chadwick Crosswalk | All years | Links Retrosheet IDs to MLBAM/Statcast IDs |
 
 ## Shell Scripts
@@ -60,22 +80,31 @@ npm run download -- 2023 -o /path/to/data
 ## Output Structure
 
 ```
-output-dir/
-├── chadwick_register.csv    # Player ID crosswalk (all years)
-├── reference/               # Biographical data, ejections
-│   ├── biofile0.csv
-│   ├── ejections.csv
-│   └── ...
-├── 2023/
-│   ├── retrosheet/          # Retrosheet files
-│   │   ├── gl2023.txt       # Game logs
-│   │   ├── 2023*.EVA/EVN    # Event files
-│   │   ├── 2023.EBA/EBN     # Box scores
-│   │   └── *2023.ROS        # Rosters
-│   └── statcast/
-│       └── 2023_statcast.csv
-└── 2024/
-    └── ...
+data/
+├── reference/                   # Shared reference data (all years)
+│   ├── chadwick_register.csv    # Player ID crosswalk
+│   ├── biofile0.csv             # Biographical data
+│   ├── ballparks0.csv           # Ballpark data
+│   ├── ejections.csv            # Ejection records
+│   └── lahman/                  # Lahman Baseball Database
+│       ├── People.csv           # Player biographical data
+│       ├── HallOfFame.csv       # HOF voting records
+│       ├── AwardsPlayers.csv    # Player awards
+│       ├── Salaries.csv         # Player salaries
+│       ├── Batting.csv          # Season batting stats
+│       ├── Pitching.csv         # Season pitching stats
+│       └── ...                  # 20+ more files
+└── seasons/                     # Per-season data
+    ├── 2023/
+    │   ├── retrosheet/          # Retrosheet files
+    │   │   ├── gl2023.txt       # Game logs
+    │   │   ├── 2023*.EVA/EVN    # Event files
+    │   │   ├── 2023.EBA/EBN     # Box scores
+    │   │   └── *2023.ROS        # Rosters
+    │   └── statcast/
+    │       └── 2023_statcast.csv
+    └── 2024/
+        └── ...
 ```
 
 ## File Formats
@@ -241,22 +270,40 @@ npm run migrate -- --data-dir ./data --years 2023 --fresh
 # Only load specific collections
 npm run migrate -- --years 2023 --collections pitches,games
 
+# Load Lahman data (awards, HOF, salaries)
+npm run migrate -- --collections lahman
+
 # Show collection statistics
 npm run migrate -- --stats-only
 ```
 
 ### Collections
 
-| Collection | Description | Documents (per season) |
-|------------|-------------|------------------------|
+**Retrosheet/Statcast:**
+
+| Collection | Description | Documents |
+|------------|-------------|-----------|
 | `players` | Player biographical data | ~15,000 total |
-| `playerSeasons` | Per-season stats | ~1,500 |
-| `games` | Game summaries | ~2,500 |
-| `pitches` | Statcast pitch-by-pitch | ~730,000 |
-| `rosters` | Team rosters | ~30 |
+| `playerSeasons` | Per-season stats | ~1,500/season |
+| `games` | Game summaries | ~2,500/season |
+| `pitches` | Statcast pitch-by-pitch | ~730,000/season |
+| `rosters` | Team rosters | ~30/season |
 | `teams` | Team information | ~30 total |
 | `venues` | Ballpark data | ~250 total |
 | `ejections` | Ejection records | varies |
+
+**Lahman (use `--collections lahman`):**
+
+| Collection | Description | Documents |
+|------------|-------------|-----------|
+| `hallOfFame` | HOF voting and inductions | ~6,400 |
+| `awards` | MVP, Cy Young, ROY, etc. | ~13,000 |
+| `awardShares` | Award voting details | ~8,200 |
+| `salaries` | Player salaries (1985-2016) | ~26,400 |
+| `schools` | College/university reference | ~1,300 |
+| `collegePlaying` | Player college attendance | ~17,700 |
+| `allStarAppearances` | All-Star game selections | ~6,400 |
+| `managers` | Managerial records | ~4,400 |
 
 ### Schema Design
 
@@ -282,6 +329,21 @@ db.pitches.find({
   "batter.playerId": 656941,
   season: 2023
 })
+
+// Example: Hall of Fame inductees
+db.hallOfFame.find({
+  inducted: true,
+  category: "Player"
+})
+
+// Example: MVP award winners
+db.awards.find({
+  awardId: "MVP",
+  yearId: { $gte: 2020 }
+})
+
+// Example: Highest paid players in 2016
+db.salaries.find({ yearId: 2016 }).sort({ salary: -1 }).limit(10)
 ```
 
 ### Indexes
@@ -293,10 +355,234 @@ Indexes are created automatically for common query patterns:
 - Players by ID and name
 - Pitcher vs batter matchups
 
+## Full Workflow Test
+
+This section walks through the complete end-to-end workflow: download, migrate to MongoDB, and verify with test queries.
+
+### Prerequisites
+
+1. **Node.js 18+** and **npm** installed
+2. **MongoDB** running (local or remote)
+
+```bash
+# Option A: Start MongoDB with Docker
+docker run -d -p 27017:27017 --name mongodb mongo:7
+
+# Option B: Use an existing MongoDB instance
+export MONGODB_URI="mongodb://user:pass@host:27017"
+```
+
+### Step 1: Install Dependencies
+
+```bash
+cd /path/to/mongoball
+npm install
+```
+
+### Step 2: Download Data
+
+Download season data (Retrosheet + Statcast) and optionally Lahman:
+
+```bash
+# Download 2023 season data (~450 MB for Statcast)
+# This may take 5-10 minutes depending on connection speed
+NODE_OPTIONS="--max-old-space-size=8192" npm run download -- 2023
+
+# Or include Lahman database (awards, HOF, salaries)
+NODE_OPTIONS="--max-old-space-size=8192" npm run download -- 2023 --lahman
+```
+
+Verify files were downloaded:
+
+```bash
+./scripts/verify-data.sh 2023
+```
+
+Expected output:
+```
+=== Verifying 2023 MLB Data ===
+✓ Statcast pitches         732,562 lines
+✓ Game logs                  2,430 lines
+✓ Event files             15 AL + 15 NL files
+✓ Roster files                  30 files
+✓ Player ID crosswalk      510,000 lines
+```
+
+### Step 3: Migrate to MongoDB
+
+Load data into MongoDB:
+
+```bash
+# Basic migration (uses localhost:27017, database: mlb)
+npm run migrate -- --years 2023
+
+# With custom MongoDB connection
+npm run migrate -- --uri "mongodb://user:pass@host:27017" --database mlb --years 2023
+
+# Fresh migration (drops existing collections first)
+npm run migrate -- --years 2023 --fresh
+
+# Include Lahman data
+npm run migrate -- --years 2023 --collections players,teams,venues,games,rosters,pitches,ejections,lahman
+```
+
+Expected output:
+```
+Connecting to MongoDB: mongodb://localhost:27017
+Connected to database: mlb
+
+Migrating data for years 2023-2023
+Data directory: /path/to/mongoball/data
+
+Loading players from Chadwick register...
+  Loaded 15,234 players
+Loading teams...
+  Loaded 33 teams
+Loading games (2023-2023)...
+  Loaded 2,430 games for 2023
+Loading Statcast pitches (2023-2023)...
+  Loaded 732,562 pitches for 2023
+
+Creating indexes...
+  Created indexes: players
+  Created indexes: games
+  Created indexes: pitches
+  ...
+
+Final Statistics:
+  players: 15,234 documents
+  games: 2,430 documents
+  pitches: 732,562 documents
+  rosters: 30 documents
+  teams: 33 documents
+
+Migration completed in 45.2s
+```
+
+### Step 4: Verify with Test Queries
+
+Run 10 automated test queries to validate the data:
+
+```bash
+# Basic verification
+npm run verify -- --year 2023
+
+# With custom MongoDB connection
+npm run verify -- --uri "mongodb://user:pass@host:27017" --database mlb --year 2023
+```
+
+Expected output:
+```
+======================================================================
+MongoDB Data Verification
+======================================================================
+Database: mlb
+Year: 2023
+
+Test Results:
+----------------------------------------------------------------------
+✓ Players collection
+    15,234 players loaded
+    Sample: {"playerId":"stris002","name":{"first":"Spencer","last":"Strider"}}
+
+✓ Games for 2023
+    2,430 games
+    Sample: {"gameId":"TEX202303300","home":"TEX","away":"PHI"}
+
+✓ Pitches (Statcast) for 2023
+    732,562 pitches
+    Sample: {"pitcher":"Spencer Strider","pitchType":"FF","speed":99.1}
+
+✓ Rosters for 2023
+    30 team rosters
+
+✓ Teams collection
+    33 teams
+
+✓ Pitch type distribution query
+    Top 5 pitch types found
+    Sample: [{"type":"FF","count":198234},{"type":"SL","count":142567}...]
+
+✓ Home run leaders query
+    Found 5 HR leaders
+    Sample: [{"_id":660271,"homeRuns":54},{"_id":592450,"homeRuns":52}...]
+
+✓ Hall of Fame (Lahman)
+    6,427 records, 341 inducted
+
+✓ Awards (Lahman)
+    12,901 awards, 156 MVPs
+
+✓ Salaries (Lahman)
+    26,428 records, max: $34,571,429
+    Sample: {"player":"Clayton Kershaw","salary":34571429,"year":2016}
+
+======================================================================
+Summary: 10 passed, 0 failed out of 10 tests
+======================================================================
+```
+
+### One-Command Workflow
+
+Alternatively, run everything with a single command:
+
+```bash
+# Full workflow: download, migrate, verify
+./scripts/full-workflow.sh 2023
+
+# With Lahman data
+./scripts/full-workflow.sh 2023 --with-lahman
+
+# With custom MongoDB and fresh start
+./scripts/full-workflow.sh 2023 --with-lahman --fresh --uri "mongodb://user:pass@host:27017"
+```
+
+### Test Queries Explained
+
+| # | Test | What It Validates |
+|---|------|-------------------|
+| 1 | Players collection | Chadwick crosswalk loaded correctly |
+| 2 | Games for year | Retrosheet game logs parsed |
+| 3 | Pitches (Statcast) | Statcast CSV streamed and loaded |
+| 4 | Rosters | Team roster files parsed |
+| 5 | Teams | Static team data loaded |
+| 6 | Pitch type distribution | Aggregation pipeline works |
+| 7 | Home run leaders | Complex query with batted ball data |
+| 8 | Hall of Fame | Lahman HOF data loaded |
+| 9 | Awards | Lahman awards loaded with denormalization |
+| 10 | Salaries | Lahman salary data with max query |
+
+### Troubleshooting
+
+**Statcast download fails or runs out of memory:**
+```bash
+# Increase Node.js heap size
+NODE_OPTIONS="--max-old-space-size=8192" npm run download -- 2023
+```
+
+**MongoDB connection refused:**
+```bash
+# Check if MongoDB is running
+docker ps | grep mongo
+
+# Or start it
+docker run -d -p 27017:27017 --name mongodb mongo:7
+```
+
+**Verification shows 0 documents:**
+```bash
+# Check if migration completed
+npm run migrate -- --stats-only
+
+# Re-run migration with fresh flag
+npm run migrate -- --years 2023 --fresh
+```
+
 ## Data Sources
 
 - **Retrosheet**: Game logs, play-by-play, box scores, rosters. [retrosheet.org](https://www.retrosheet.org)
 - **Baseball Savant**: Statcast pitch tracking data. [baseballsavant.mlb.com](https://baseballsavant.mlb.com)
+- **Lahman Database**: Historical stats, awards, Hall of Fame, salaries. [sabr.org/lahman-database](https://sabr.org/lahman-database/)
 - **Chadwick Bureau**: Player ID register. [github.com/chadwickbureau](https://github.com/chadwickbureau/register)
 
-All data is free for non-commercial use. The information used here was obtained free of charge from and is copyrighted by Retrosheet.
+All data is free for non-commercial use. The information used here was obtained free of charge from and is copyrighted by Retrosheet. The Lahman Database is licensed under Creative Commons Attribution-ShareAlike 3.0.

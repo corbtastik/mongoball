@@ -54,8 +54,9 @@ export async function loadRostersForSeason(
   dataDir: string,
   season: number
 ): Promise<number> {
-  // Find roster directory
+  // Find roster directory (prefer seasons/{year}/retrosheet structure)
   const possibleDirs = [
+    join(dataDir, 'seasons', String(season), 'retrosheet'),
     join(dataDir, String(season), 'retrosheet'),
     join(dataDir, String(season)),
     join(dataDir, 'retrosheet'),

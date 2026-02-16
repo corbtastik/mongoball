@@ -187,8 +187,9 @@ export async function loadGamesForSeason(
   dataDir: string,
   season: number
 ): Promise<number> {
-  // Try multiple possible paths
+  // Try multiple possible paths (prefer seasons/{year}/retrosheet structure)
   const possiblePaths = [
+    join(dataDir, 'seasons', String(season), 'retrosheet', `gl${season}.txt`),
     join(dataDir, String(season), 'retrosheet', `gl${season}.txt`),
     join(dataDir, String(season), `gl${season}.txt`),
     join(dataDir, 'retrosheet', `gl${season}.txt`),

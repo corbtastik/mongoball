@@ -26,6 +26,7 @@ import { loadRosters } from './loaders/rosters.js';
 import { loadTeams } from './loaders/teams.js';
 import { loadVenues } from './loaders/venues.js';
 import { loadEjections } from './loaders/ejections.js';
+import { loadLahman } from './loaders/lahman/index.js';
 
 interface MigrateOptions {
   uri: string;
@@ -125,6 +126,11 @@ async function runMigration(options: MigrateOptions): Promise<void> {
     await loadPitches(options.dataDir, startYear, endYear);
   }
 
+  // Load Lahman data (not year-specific, covers all history)
+  if (shouldLoad('lahman')) {
+    await loadLahman(options.dataDir);
+  }
+
   // Create indexes
   console.log('\n');
   await createIndexes();
@@ -152,7 +158,7 @@ program
   .description('Migrate MLB data to MongoDB')
   .option('--uri <uri>', 'MongoDB connection URI', 'mongodb://localhost:27017')
   .option('--database <name>', 'Database name', 'mlb')
-  .option('--data-dir <path>', 'Data directory', '.')
+  .option('--data-dir <path>', 'Data directory', './data')
   .option('--years <range>', 'Year or year range (e.g., 2023 or 2020-2024)', '2023')
   .option(
     '--collections <list>',
@@ -164,18 +170,36 @@ program
   .addHelpText(
     'after',
     `
+Data Directory Structure:
+  data/
+  ├── reference/              # Shared reference data
+  │   ├── chadwick_register.csv
+  │   ├── biofile0.csv
+  │   ├── ballparks0.csv
+  │   └── lahman/             # Lahman Baseball Database
+  │       ├── People.csv
+  │       ├── HallOfFame.csv
+  │       └── ...
+  └── seasons/                # Per-season data
+      └── {year}/
+          ├── retrosheet/     # Game logs, rosters, events
+          └── statcast/       # Pitch-by-pitch tracking
+
 Examples:
-  # Migrate 2023 data
-  npx tsx src/mongo/migrate.ts --data-dir ./data --years 2023
+  # Migrate 2023 data (uses ./data by default)
+  npx tsx src/mongo/migrate.ts --years 2023
 
   # Migrate multiple years
-  npx tsx src/mongo/migrate.ts --data-dir ./data --years 2020-2024
+  npx tsx src/mongo/migrate.ts --years 2020-2024
 
   # Fresh migration (drop existing data)
-  npx tsx src/mongo/migrate.ts --data-dir ./data --years 2023 --fresh
+  npx tsx src/mongo/migrate.ts --years 2023 --fresh
 
   # Only load pitches and games
   npx tsx src/mongo/migrate.ts --years 2023 --collections pitches,games
+
+  # Load Lahman data (awards, HOF, salaries)
+  npx tsx src/mongo/migrate.ts --collections lahman
 
   # Create indexes only
   npx tsx src/mongo/migrate.ts --indexes-only
@@ -183,14 +207,28 @@ Examples:
   # Show statistics
   npx tsx src/mongo/migrate.ts --stats-only
 
+  # Custom data directory
+  npx tsx src/mongo/migrate.ts --data-dir /path/to/data --years 2023
+
 Collections:
-  players      - Player biographical data (from Chadwick register)
-  teams        - Team information
-  venues       - Ballpark data
-  ejections    - Ejection records
-  games        - Game logs
-  rosters      - Season rosters
-  pitches      - Statcast pitch-by-pitch (2015+)
+  Retrosheet/Statcast:
+    players      - Player biographical data (from Chadwick register)
+    teams        - Team information
+    venues       - Ballpark data
+    ejections    - Ejection records
+    games        - Game logs
+    rosters      - Season rosters
+    pitches      - Statcast pitch-by-pitch (2015+)
+
+  Lahman (use --collections lahman):
+    hallOfFame        - Hall of Fame voting and inductions
+    awards            - MVP, Cy Young, ROY, etc.
+    awardShares       - Award voting details
+    salaries          - Player salaries (1985-2016)
+    schools           - College/university reference
+    collegePlaying    - Player college attendance
+    allStarAppearances - All-Star game selections
+    managers          - Managerial records
 `
   )
   .action(async (opts) => {

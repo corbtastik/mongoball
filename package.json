@@ -1,11 +1,13 @@
 {
-  "name": "retrosheet",
+  "name": "mongoball",
   "version": "1.0.0",
-  "description": "Download and manage MLB data from Retrosheet and Baseball Savant",
+  "description": "Download MLB data from Retrosheet and Baseball Savant into MongoDB",
   "type": "module",
   "scripts": {
     "download": "npx tsx src/download-season.ts",
     "migrate": "npx tsx src/mongo/migrate.ts",
+    "verify": "npx tsx src/mongo/verify.ts",
+    "workflow": "./scripts/full-workflow.sh",
     "build": "tsc",
     "start": "node dist/download-season.js"
   },
@@ -15,7 +17,8 @@
     "retrosheet",
     "statcast",
     "savant",
-    "mongodb"
+    "mongodb",
+    "mongoball"
   ],
   "license": "MIT",
   "devDependencies": {

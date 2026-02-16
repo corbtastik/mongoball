@@ -140,8 +140,9 @@ export async function loadPitchesForSeason(
   dataDir: string,
   season: number
 ): Promise<number> {
-  // Try multiple possible paths
+  // Try multiple possible paths (prefer seasons/{year}/statcast structure)
   const possiblePaths = [
+    join(dataDir, 'seasons', String(season), 'statcast', `${season}_statcast.csv`),
     join(dataDir, String(season), 'statcast', `${season}_statcast.csv`),
     join(dataDir, String(season), `${season}_statcast.csv`),
     join(dataDir, 'statcast', `${season}_statcast.csv`),

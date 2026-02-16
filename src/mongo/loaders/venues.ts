@@ -14,7 +14,7 @@ import { streamCSV, parseDate } from '../parsers.js';
  * Load venues from ballparks file
  */
 export async function loadVenues(dataDir: string): Promise<number> {
-  // Try multiple possible paths
+  // Try multiple possible paths (prefer reference/ directory)
   const possiblePaths = [
     join(dataDir, 'reference', 'ballparks0.csv'),
     join(dataDir, 'ballparks0.csv'),

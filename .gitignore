@@ -1,55 +1,7 @@
 # ============================================================================
-# Downloaded Data Files - Do not commit source data
+# Downloaded Data - All MLB data lives in data/ directory
 # ============================================================================
-
-# Statcast pitch-by-pitch data
-*_statcast.csv
-
-# Retrosheet game logs
-gl*.txt
-gl*.zip
-
-# Retrosheet event files (play-by-play)
-*.EVA
-*.EVN
-*.EVE
-
-# Retrosheet box score files
-*.EBA
-*.EBN
-
-# Retrosheet roster files
-*.ROS
-TEAM[0-9][0-9][0-9][0-9]
-
-# Retrosheet CSV statistics
-*batting.csv
-*pitching.csv
-*fielding.csv
-*plays.csv
-*gameinfo.csv
-*teamstats.csv
-*allplayers.csv
-*schedule.csv
-
-# Retrosheet zip archives
-*.zip
-
-# Reference data files
-biofile*.csv
-ballparks*.csv
-teams0.csv
-managers*.csv
-coaches*.csv
-umpires*.csv
-ejections.csv
-relatives.csv
-
-# Chadwick player ID crosswalk
-chadwick_register.csv
-
-# Year-based data directories
-[0-9][0-9][0-9][0-9]/
+data/
 
 # ============================================================================
 # Node.js

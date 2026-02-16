@@ -83,7 +83,8 @@ function buildSeasonsActive(firstYear: string, lastYear: string): number[] {
  * Load players from Chadwick crosswalk
  */
 export async function loadPlayers(dataDir: string): Promise<number> {
-  const crosswalkPath = join(dataDir, 'chadwick_register.csv');
+  // Reference data lives in data/reference/
+  const crosswalkPath = join(dataDir, 'reference', 'chadwick_register.csv');
   const biofilePath = join(dataDir, 'reference', 'biofile0.csv');
 
   if (!existsSync(crosswalkPath)) {

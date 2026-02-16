@@ -15,6 +15,8 @@ export interface DownloadOptions {
   noRetrosheet: boolean;
   crosswalkOnly: boolean;
   includeReference: boolean;
+  lahman: boolean;
+  lahmanOnly: boolean;
 }
 
 export interface DownloadResult {
