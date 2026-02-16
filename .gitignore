@@ -1,0 +1,114 @@
+# ============================================================================
+# Downloaded Data Files - Do not commit source data
+# ============================================================================
+
+# Statcast pitch-by-pitch data
+*_statcast.csv
+
+# Retrosheet game logs
+gl*.txt
+gl*.zip
+
+# Retrosheet event files (play-by-play)
+*.EVA
+*.EVN
+*.EVE
+
+# Retrosheet box score files
+*.EBA
+*.EBN
+
+# Retrosheet roster files
+*.ROS
+TEAM[0-9][0-9][0-9][0-9]
+
+# Retrosheet CSV statistics
+*batting.csv
+*pitching.csv
+*fielding.csv
+*plays.csv
+*gameinfo.csv
+*teamstats.csv
+*allplayers.csv
+*schedule.csv
+
+# Retrosheet zip archives
+*.zip
+
+# Reference data files
+biofile*.csv
+ballparks*.csv
+teams0.csv
+managers*.csv
+coaches*.csv
+umpires*.csv
+ejections.csv
+relatives.csv
+
+# Chadwick player ID crosswalk
+chadwick_register.csv
+
+# Year-based data directories
+[0-9][0-9][0-9][0-9]/
+
+# ============================================================================
+# Node.js
+# ============================================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+
+# ============================================================================
+# Build Output
+# ============================================================================
+dist/
+build/
+*.js.map
+*.tsbuildinfo
+
+# ============================================================================
+# IDE and Editor
+# ============================================================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ============================================================================
+# OS Files
+# ============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================================================
+# Environment and Secrets
+# ============================================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ============================================================================
+# Claude Code
+# ============================================================================
+.claude/
+
+# ============================================================================
+# Misc
+# ============================================================================
+*.log
+tmp/
+temp/
+.cache/

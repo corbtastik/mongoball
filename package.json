@@ -1,0 +1,32 @@
+{
+  "name": "retrosheet",
+  "version": "1.0.0",
+  "description": "Download and manage MLB data from Retrosheet and Baseball Savant",
+  "type": "module",
+  "scripts": {
+    "download": "npx tsx src/download-season.ts",
+    "migrate": "npx tsx src/mongo/migrate.ts",
+    "build": "tsc",
+    "start": "node dist/download-season.js"
+  },
+  "keywords": [
+    "mlb",
+    "baseball",
+    "retrosheet",
+    "statcast",
+    "savant",
+    "mongodb"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "commander": "^13.0.0",
+    "mongodb": "^6.12.0"
+  }
+}
