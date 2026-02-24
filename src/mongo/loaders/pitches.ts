@@ -9,7 +9,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { getCollection } from '../connection.js';
 import { COLLECTIONS, Pitch, PitchParticipant, PitchData, BattedBall } from '../schema.js';
-import { streamCSV, parseDate, parseInt, parseFloat, parseSide } from '../parsers.js';
+import { streamCSV, rowToObject, parseDate, parseInt, parseFloat, parseSide } from '../parsers.js';
 
 const BATCH_SIZE = 5000;
 
@@ -171,12 +171,7 @@ export async function loadPitchesForSeason(
   for await (const { row, headers } of streamCSV(filePath)) {
     if (!headers) continue;
 
-    // Build row object
-    const obj: Record<string, string> = {};
-    for (let i = 0; i < headers.length; i++) {
-      obj[headers[i]] = row[i] || '';
-    }
-    const statcast = obj as unknown as StatcastRow;
+    const statcast = rowToObject(row, headers) as unknown as StatcastRow;
 
     // Skip invalid rows
     if (!statcast.game_date || !statcast.pitcher) continue;

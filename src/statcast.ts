@@ -3,16 +3,17 @@
  *
  * Uses true end-to-end streaming to avoid memory issues with large datasets.
  * Response bodies are streamed directly to disk without buffering.
+ *
+ * Source configuration: src/config/sources.ts
  */
 
 import { join } from 'path';
-import { createWriteStream, WriteStream } from 'fs';
+import { createWriteStream, writeFileSync, WriteStream } from 'fs';
 import { Readable } from 'stream';
 import { ensureDir, formatSize, getFileSize, sleep, formatDate, addDays } from './utils.js';
+import { STATCAST } from './config/sources.js';
 import { SEASON_DATES } from './types.js';
 import type { DownloadResult } from './types.js';
-
-const SAVANT_BASE_URL = 'https://baseballsavant.mlb.com/statcast_search/csv';
 
 // Reduced chunk size to minimize memory per request
 const CHUNK_DAYS = 3;
@@ -69,7 +70,7 @@ function buildStatcastUrl(params: StatcastQueryParams): string {
     type: 'details',
   });
 
-  return `${SAVANT_BASE_URL}?${searchParams.toString()}`;
+  return `${STATCAST.searchUrl}?${searchParams.toString()}`;
 }
 
 /**
@@ -253,8 +254,8 @@ export async function downloadStatcast(
 ): Promise<DownloadResult> {
   console.log(`\n[Statcast] Downloading ${year} data...`);
 
-  if (year < 2015) {
-    console.log('  Skipping: Statcast data only available 2015+');
+  if (year < STATCAST.firstYear) {
+    console.log(`  Skipping: Statcast data only available ${STATCAST.firstYear}+`);
     return { success: true, files: [], errors: [] };
   }
 
@@ -327,6 +328,77 @@ export async function downloadStatcast(
   return {
     success: errors.length === 0,
     files: [outputFile],
+    errors,
+  };
+}
+
+/**
+ * Download Statcast batting leaderboards for a season
+ */
+export async function downloadBattingLeaderboards(
+  year: number,
+  destDir: string
+): Promise<DownloadResult> {
+  console.log(`\n[Statcast] Downloading ${year} batting leaderboards...`);
+
+  if (year < STATCAST.firstYear) {
+    console.log(`  Skipping: Statcast data only available ${STATCAST.firstYear}+`);
+    return { success: true, files: [], errors: [] };
+  }
+
+  const leaderboardDir = join(destDir, 'statcast', 'leaderboards');
+  ensureDir(leaderboardDir);
+
+  const errors: string[] = [];
+  const downloadedFiles: string[] = [];
+
+  const leaderboards = [
+    { key: 'batTracking', name: 'Bat Tracking' },
+    { key: 'expectedStats', name: 'Expected Stats' },
+    { key: 'exitVeloBarrels', name: 'Exit Velo & Barrels' },
+    { key: 'battedBallProfile', name: 'Batted Ball Profile' },
+    { key: 'sprintSpeed', name: 'Sprint Speed' },
+    { key: 'runValue', name: 'Batting Run Value' },
+  ] as const;
+
+  for (const { key, name } of leaderboards) {
+    const url = STATCAST.leaderboards.batting[key](year);
+    const filename = STATCAST.leaderboardFiles[key];
+    const outputPath = join(leaderboardDir, `${year}_${filename}`);
+
+    process.stdout.write(`  ${name}...`);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; mongoball/1.0)',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const text = await response.text();
+      writeFileSync(outputPath, text);
+
+      const lines = text.split('\n').length - 1;
+      console.log(` ${lines} rows`);
+      downloadedFiles.push(outputPath);
+
+      // Rate limiting
+      await sleep(300);
+    } catch (error) {
+      console.log(` FAILED (${error})`);
+      errors.push(`${name}: ${error}`);
+    }
+  }
+
+  console.log(`  Downloaded ${downloadedFiles.length}/${leaderboards.length} leaderboards`);
+
+  return {
+    success: errors.length === 0,
+    files: downloadedFiles,
     errors,
   };
 }

@@ -68,6 +68,17 @@ export async function* streamCSV(
 }
 
 /**
+ * Convert a CSV row array to an object using headers
+ */
+export function rowToObject(row: string[], headers: string[]): Record<string, string> {
+  const obj: Record<string, string> = {};
+  for (let i = 0; i < headers.length; i++) {
+    obj[headers[i]] = row[i] || '';
+  }
+  return obj;
+}
+
+/**
  * Read a CSV file into an array of objects
  */
 export async function readCSV<T extends Record<string, string>>(
@@ -80,12 +91,7 @@ export async function readCSV<T extends Record<string, string>>(
     if (h && headers.length === 0) {
       headers = h;
     }
-
-    const obj: Record<string, string> = {};
-    for (let i = 0; i < headers.length; i++) {
-      obj[headers[i]] = row[i] || '';
-    }
-    results.push(obj as T);
+    results.push(rowToObject(row, headers) as T);
   }
 
   return results;
@@ -146,27 +152,6 @@ export function extractSeasonFromGameId(gameId: string): number {
 }
 
 /**
- * Extract date from game ID (e.g., "TEX202311010" -> Date)
- */
-export function extractDateFromGameId(gameId: string): Date | undefined {
-  const match = gameId.match(/[A-Z]{3}(\d{8})/);
-  if (!match) return undefined;
-  return parseDate(match[1]);
-}
-
-/**
- * Parse game type from file extension or game ID
- */
-export function parseGameType(filename: string, gameId?: string): string {
-  if (filename.includes('WS')) return 'WS';
-  if (filename.includes('ALCS') || filename.includes('NLCS')) return 'CS';
-  if (filename.includes('ALD') || filename.includes('NLD')) return 'DS';
-  if (filename.includes('ALW') || filename.includes('NLW')) return 'WC';
-  if (filename.includes('AS')) return 'AS';
-  return 'R';
-}
-
-/**
  * Parse bats/throws value
  */
 export function parseSide(value: string): 'R' | 'L' | 'B' {
@@ -174,17 +159,6 @@ export function parseSide(value: string): 'R' | 'L' | 'B' {
   if (upper === 'L') return 'L';
   if (upper === 'B' || upper === 'S') return 'B';
   return 'R';
-}
-
-/**
- * Convert innings (e.g., "186.2") to outs
- */
-export function inningsToOuts(innings: string): number {
-  if (!innings) return 0;
-  const parts = innings.split('.');
-  const full = Number.parseInt(parts[0], 10) || 0;
-  const partial = Number.parseInt(parts[1], 10) || 0;
-  return full * 3 + partial;
 }
 
 /**

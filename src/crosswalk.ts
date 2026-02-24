@@ -1,24 +1,25 @@
 /**
  * Chadwick Bureau player ID crosswalk download
+ *
+ * Downloads and combines the 16-part player register from GitHub.
+ * Source configuration: src/config/sources.ts
  */
 
 import { join } from 'path';
 import { existsSync, createWriteStream } from 'fs';
 import { ensureDir, formatSize, getFileSize } from './utils.js';
+import { CHADWICK } from './config/sources.js';
 import type { DownloadResult } from './types.js';
-
-const CHADWICK_BASE_URL =
-  'https://raw.githubusercontent.com/chadwickbureau/register/master/data';
 
 /**
  * Download Chadwick Bureau player ID crosswalk
  */
 export async function downloadCrosswalk(destDir: string): Promise<DownloadResult> {
-  const crosswalkFile = join(destDir, 'chadwick_register.csv');
+  const crosswalkFile = join(destDir, CHADWICK.outputFile);
 
   if (existsSync(crosswalkFile)) {
     const size = getFileSize(crosswalkFile);
-    console.log(`\n[Crosswalk] Already exists: chadwick_register.csv (${formatSize(size || 0)})`);
+    console.log(`\n[Crosswalk] Already exists: ${CHADWICK.outputFile} (${formatSize(size || 0)})`);
     return { success: true, files: [crosswalkFile], errors: [] };
   }
 
@@ -26,14 +27,14 @@ export async function downloadCrosswalk(destDir: string): Promise<DownloadResult
   ensureDir(destDir);
 
   const errors: string[] = [];
-  const parts = '0123456789abcdef'.split('');
   let totalLines = 0;
 
   // Download all 16 parts and combine
   const writeStream = createWriteStream(crosswalkFile);
 
-  for (const part of parts) {
-    const url = `${CHADWICK_BASE_URL}/people-${part}.csv`;
+  for (let i = 0; i < CHADWICK.files.length; i++) {
+    const url = CHADWICK.files[i];
+    const partId = url.split('people-')[1]?.replace('.csv', '') || String(i);
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -42,9 +43,9 @@ export async function downloadCrosswalk(destDir: string): Promise<DownloadResult
       const text = await response.text();
       writeStream.write(text);
       totalLines += text.split('\n').length;
-      process.stdout.write(`\r  Downloaded part ${part}...`);
+      process.stdout.write(`\r  Downloaded part ${partId}...`);
     } catch (error) {
-      errors.push(`people-${part}.csv: ${error}`);
+      errors.push(`people-${partId}.csv: ${error}`);
     }
   }
 

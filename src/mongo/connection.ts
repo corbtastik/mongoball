@@ -169,14 +169,6 @@ export async function createIndexes(): Promise<void> {
   ]);
   console.log('  Created indexes: rosters');
 
-  // Transactions
-  await database.collection(COLLECTIONS.TRANSACTIONS).createIndexes([
-    { key: { playerId: 1, date: -1 } },
-    { key: { season: 1, type: 1 } },
-    { key: { date: -1 } },
-  ]);
-  console.log('  Created indexes: transactions');
-
   // Ejections
   await database.collection(COLLECTIONS.EJECTIONS).createIndexes([
     { key: { gameId: 1 } },

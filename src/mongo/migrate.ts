@@ -26,6 +26,8 @@ import { loadRosters } from './loaders/rosters.js';
 import { loadTeams } from './loaders/teams.js';
 import { loadVenues } from './loaders/venues.js';
 import { loadEjections } from './loaders/ejections.js';
+import { loadPlays } from './loaders/plays.js';
+import { loadPlayerSeasons } from './loaders/playerSeasons.js';
 import { loadLahman } from './loaders/lahman/index.js';
 
 interface MigrateOptions {
@@ -126,6 +128,14 @@ async function runMigration(options: MigrateOptions): Promise<void> {
     await loadPitches(options.dataDir, startYear, endYear);
   }
 
+  if (shouldLoad('plays')) {
+    await loadPlays(options.dataDir, startYear, endYear);
+  }
+
+  if (shouldLoad('playerseasons')) {
+    await loadPlayerSeasons(options.dataDir, startYear, endYear);
+  }
+
   // Load Lahman data (not year-specific, covers all history)
   if (shouldLoad('lahman')) {
     await loadLahman(options.dataDir);
@@ -219,6 +229,7 @@ Collections:
     games        - Game logs
     rosters      - Season rosters
     pitches      - Statcast pitch-by-pitch (2015+)
+    plays        - Retrosheet play-by-play events
 
   Lahman (use --collections lahman):
     hallOfFame        - Hall of Fame voting and inductions
@@ -229,6 +240,7 @@ Collections:
     collegePlaying    - Player college attendance
     allStarAppearances - All-Star game selections
     managers          - Managerial records
+    playerSeasons     - Historical batting/pitching stats by season
 `
   )
   .action(async (opts) => {

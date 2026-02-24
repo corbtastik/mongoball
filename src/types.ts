@@ -14,9 +14,10 @@ export interface DownloadOptions {
   statcastOnly: boolean;
   noRetrosheet: boolean;
   crosswalkOnly: boolean;
-  includeReference: boolean;
+  noReference: boolean; // Skip reference data (ballparks, ejections) - default: false
   lahman: boolean;
   lahmanOnly: boolean;
+  battingLeaderboards: boolean; // Include Statcast batting leaderboards
 }
 
 export interface DownloadResult {

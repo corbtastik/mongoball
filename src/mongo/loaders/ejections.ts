@@ -8,7 +8,8 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { getCollection } from '../connection.js';
 import { COLLECTIONS, Ejection } from '../schema.js';
-import { streamCSV, parseDate, parseInt, extractSeasonFromGameId } from '../parsers.js';
+import { streamCSV, rowToObject, parseDate, parseInt, extractSeasonFromGameId } from '../parsers.js';
+import { EJECTIONS_COLUMNS, getColumn, validateColumns } from '../../config/columns.js';
 
 /**
  * Load ejections from ejections file
@@ -18,41 +19,31 @@ export async function loadEjections(
   startYear?: number,
   endYear?: number
 ): Promise<number> {
-  // Try multiple possible paths
-  const possiblePaths = [
-    join(dataDir, 'reference', 'ejections.csv'),
-    join(dataDir, 'ejections.csv'),
-  ];
+  const filePath = join(dataDir, 'reference', 'ejections.csv');
 
-  let filePath: string | null = null;
-  for (const p of possiblePaths) {
-    if (existsSync(p)) {
-      filePath = p;
-      break;
-    }
-  }
-
-  if (!filePath) {
+  if (!existsSync(filePath)) {
     console.log('  Ejections file not found, skipping');
+    console.log(`  Expected: ${filePath}`);
     return 0;
   }
 
   console.log('Loading ejections...');
   const collection = getCollection<Ejection>(COLLECTIONS.EJECTIONS);
-
   const ejections: Ejection[] = [];
   let skipped = 0;
+  let validated = false;
 
   for await (const { row, headers } of streamCSV(filePath)) {
     if (!headers) continue;
 
-    // Build row object
-    const obj: Record<string, string> = {};
-    for (let i = 0; i < headers.length; i++) {
-      obj[headers[i]] = row[i] || '';
+    // Validate columns on first row
+    if (!validated) {
+      validateColumns(headers, EJECTIONS_COLUMNS, 'ejections.csv');
+      validated = true;
     }
 
-    const gameId = obj['GAME.ID'] || obj['game_id'] || '';
+    const obj = rowToObject(row, headers);
+    const gameId = getColumn(obj, EJECTIONS_COLUMNS.gameId);
     if (!gameId) continue;
 
     const season = extractSeasonFromGameId(gameId);
@@ -67,32 +58,32 @@ export async function loadEjections(
       continue;
     }
 
-    const dateStr = obj['DATE'] || obj['date'] || '';
+    const dateStr = getColumn(obj, EJECTIONS_COLUMNS.date);
     const date = parseDate(dateStr);
     if (!date) continue;
 
-    // Determine role
+    // Determine role - Retrosheet uses P=player, M=manager, C=coach
     let role: 'player' | 'manager' | 'coach' = 'player';
-    const jobType = (obj['JOB'] || obj['job'] || '').toLowerCase();
-    if (jobType.includes('manager')) role = 'manager';
-    else if (jobType.includes('coach')) role = 'coach';
+    const jobType = getColumn(obj, EJECTIONS_COLUMNS.job).toUpperCase();
+    if (jobType === 'M' || jobType.includes('MANAGER')) role = 'manager';
+    else if (jobType === 'C' || jobType.includes('COACH')) role = 'coach';
 
     ejections.push({
       gameId,
       date,
       season,
       ejectee: {
-        playerId: obj['EJECTEE.ID'] || obj['ejectee_id'] || '',
-        name: obj['EJECTEE.NAME'] || obj['ejectee_name'] || '',
+        playerId: getColumn(obj, EJECTIONS_COLUMNS.ejecteeId),
+        name: getColumn(obj, EJECTIONS_COLUMNS.ejecteeName),
         role,
-        teamId: obj['TEAM'] || obj['team'] || '',
+        teamId: getColumn(obj, EJECTIONS_COLUMNS.team),
       },
       umpire: {
-        umpireId: obj['UMPIRE.ID'] || obj['umpire_id'] || '',
-        name: obj['UMPIRE.NAME'] || obj['umpire_name'] || '',
+        umpireId: getColumn(obj, EJECTIONS_COLUMNS.umpireId),
+        name: getColumn(obj, EJECTIONS_COLUMNS.umpireName),
       },
-      inning: parseInt(obj['INNING'] || obj['inning']),
-      reason: obj['REASON'] || obj['reason'] || undefined,
+      inning: parseInt(getColumn(obj, EJECTIONS_COLUMNS.inning)),
+      reason: getColumn(obj, EJECTIONS_COLUMNS.reason) || undefined,
     });
   }
 

@@ -1,13 +1,15 @@
 /**
  * Retrosheet data download functions
+ *
+ * Downloads season and reference data from Retrosheet.org.
+ * Source configuration: src/config/sources.ts
  */
 
 import { join } from 'path';
 import { readdirSync } from 'fs';
 import { ensureDir, downloadAndExtractZip } from './utils.js';
+import { RETROSHEET } from './config/sources.js';
 import type { DownloadResult } from './types.js';
-
-const RETROSHEET_BASE_URL = 'https://www.retrosheet.org';
 
 /**
  * Download all Retrosheet data for a season
@@ -25,7 +27,7 @@ export async function downloadRetrosheet(
 
   // Game logs
   const glSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/gamelogs/gl${year}.zip`,
+    RETROSHEET.season.gameLogs(year),
     retrosheetDir,
     'game logs'
   );
@@ -33,7 +35,7 @@ export async function downloadRetrosheet(
 
   // Regular season event files
   const eveSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/events/${year}eve.zip`,
+    RETROSHEET.season.events(year),
     retrosheetDir,
     'event files (play-by-play)'
   );
@@ -41,7 +43,7 @@ export async function downloadRetrosheet(
 
   // Box score event files
   const boxSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/events/${year}box.zip`,
+    RETROSHEET.season.boxScores(year),
     retrosheetDir,
     'box score events'
   );
@@ -49,7 +51,7 @@ export async function downloadRetrosheet(
 
   // Postseason event files
   const postSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/events/${year}post.zip`,
+    RETROSHEET.season.postseason(year),
     retrosheetDir,
     'postseason events'
   );
@@ -57,7 +59,7 @@ export async function downloadRetrosheet(
 
   // All-Star game
   const asSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/events/${year}as.zip`,
+    RETROSHEET.season.allStar(year),
     retrosheetDir,
     'All-Star game'
   );
@@ -65,7 +67,7 @@ export async function downloadRetrosheet(
 
   // Schedule
   const schedSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/schedule/${year}SKED.zip`,
+    RETROSHEET.season.schedule(year),
     retrosheetDir,
     'schedule'
   );
@@ -90,33 +92,33 @@ export async function downloadReferenceData(
 ): Promise<DownloadResult> {
   console.log(`\n[Reference] Downloading biographical and reference data...`);
 
-  const refDir = join(destDir, 'reference');
-  ensureDir(refDir);
+  // destDir is already the reference directory (e.g., data/reference)
+  ensureDir(destDir);
 
   const errors: string[] = [];
 
-  // Biographical data
+  // Biographical data (ballparks, players, coaches, etc.)
   const bioSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/downloads/biodata.zip`,
-    refDir,
+    RETROSHEET.reference.biodata,
+    destDir,
     'biographical data'
   );
   if (!bioSuccess) errors.push('biographical data');
 
   // Ejections
   const ejectSuccess = await downloadAndExtractZip(
-    `${RETROSHEET_BASE_URL}/ejections.zip`,
-    refDir,
+    RETROSHEET.reference.ejections,
+    destDir,
     'ejections'
   );
   if (!ejectSuccess) errors.push('ejections');
 
-  const files = readdirSync(refDir);
+  const files = readdirSync(destDir);
   console.log(`  Downloaded ${files.length} reference files`);
 
   return {
     success: errors.length === 0,
-    files: files.map((f) => join(refDir, f)),
+    files: files.map((f) => join(destDir, f)),
     errors,
   };
 }

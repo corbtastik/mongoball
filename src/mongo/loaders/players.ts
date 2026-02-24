@@ -9,7 +9,7 @@ import { join } from 'path';
 import { Collection } from 'mongodb';
 import { getCollection } from '../connection.js';
 import { COLLECTIONS, Player } from '../schema.js';
-import { streamCSV, parseDate, parseInt, parseSide, batch } from '../parsers.js';
+import { streamCSV, rowToObject, parseDate, parseInt, parseSide, batch } from '../parsers.js';
 
 const BATCH_SIZE = 1000;
 
@@ -101,11 +101,7 @@ export async function loadPlayers(dataDir: string): Promise<number> {
     console.log('  Loading biofile for additional data...');
     for await (const { row, headers } of streamCSV(biofilePath)) {
       if (!headers) continue;
-      const obj: Record<string, string> = {};
-      for (let i = 0; i < headers.length; i++) {
-        obj[headers[i]] = row[i] || '';
-      }
-      const bio = obj as unknown as BiofileRow;
+      const bio = rowToObject(row, headers) as unknown as BiofileRow;
       if (bio.id) {
         bioData.set(bio.id, bio);
       }
@@ -121,11 +117,7 @@ export async function loadPlayers(dataDir: string): Promise<number> {
   for await (const { row, headers } of streamCSV(crosswalkPath)) {
     if (!headers) continue;
 
-    const obj: Record<string, string> = {};
-    for (let i = 0; i < headers.length; i++) {
-      obj[headers[i]] = row[i] || '';
-    }
-    const xw = obj as unknown as CrosswalkRow;
+    const xw = rowToObject(row, headers) as unknown as CrosswalkRow;
 
     // Skip entries without Retrosheet ID or header rows
     // (Chadwick file is concatenated from 16 files, each with headers)

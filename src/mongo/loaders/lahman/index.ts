@@ -21,8 +21,8 @@ import {
   LahmanBatting,
   LahmanPitching,
 } from '../../schema.js';
-import { streamCSV, parseInt, batch } from '../../parsers.js';
-import { LAHMAN_FILES } from '../../../lahman.js';
+import { streamCSV, rowToObject, parseInt, batch } from '../../parsers.js';
+import { LAHMAN } from '../../../config/sources.js';
 
 const BATCH_SIZE = 1000;
 
@@ -36,7 +36,7 @@ let schoolsLookup: Map<string, string> = new Map(); // schoolId -> name
  */
 async function buildLookups(lahmanDir: string): Promise<void> {
   // Build people lookup
-  const peoplePath = join(lahmanDir, LAHMAN_FILES.people);
+  const peoplePath = join(lahmanDir, LAHMAN.files.people);
   if (existsSync(peoplePath)) {
     for await (const { row, headers } of streamCSV(peoplePath)) {
       if (!headers) continue;
@@ -52,7 +52,7 @@ async function buildLookups(lahmanDir: string): Promise<void> {
   }
 
   // Build schools lookup
-  const schoolsPath = join(lahmanDir, LAHMAN_FILES.schools);
+  const schoolsPath = join(lahmanDir, LAHMAN.files.schools);
   if (existsSync(schoolsPath)) {
     for await (const { row, headers } of streamCSV(schoolsPath)) {
       if (!headers) continue;
@@ -63,14 +63,6 @@ async function buildLookups(lahmanDir: string): Promise<void> {
     }
     console.log(`  Schools lookup: ${schoolsLookup.size} entries`);
   }
-}
-
-function rowToObject(row: string[], headers: string[]): Record<string, string> {
-  const obj: Record<string, string> = {};
-  for (let i = 0; i < headers.length; i++) {
-    obj[headers[i]] = row[i] || '';
-  }
-  return obj;
 }
 
 function getPlayerName(playerId: string): { nameFirst: string; nameLast: string } {
@@ -85,7 +77,7 @@ function getSchoolName(schoolId: string): string {
  * Load Hall of Fame data
  */
 async function loadHallOfFame(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.hallOfFame);
+  const filePath = join(lahmanDir, LAHMAN.files.hallOfFame);
   if (!existsSync(filePath)) {
     console.log('  HallOfFame.csv not found, skipping');
     return 0;
@@ -130,7 +122,7 @@ async function loadAwards(lahmanDir: string): Promise<number> {
   let total = 0;
 
   // Player awards
-  const playerAwardsPath = join(lahmanDir, LAHMAN_FILES.awardsPlayers);
+  const playerAwardsPath = join(lahmanDir, LAHMAN.files.awardsPlayers);
   if (existsSync(playerAwardsPath)) {
     const entries: Award[] = [];
     for await (const { row, headers } of streamCSV(playerAwardsPath)) {
@@ -160,7 +152,7 @@ async function loadAwards(lahmanDir: string): Promise<number> {
   }
 
   // Manager awards
-  const managerAwardsPath = join(lahmanDir, LAHMAN_FILES.awardsManagers);
+  const managerAwardsPath = join(lahmanDir, LAHMAN.files.awardsManagers);
   if (existsSync(managerAwardsPath)) {
     const entries: Award[] = [];
     for await (const { row, headers } of streamCSV(managerAwardsPath)) {
@@ -201,7 +193,7 @@ async function loadAwardShares(lahmanDir: string): Promise<number> {
   let total = 0;
 
   // Player award shares
-  const playerSharesPath = join(lahmanDir, LAHMAN_FILES.awardsSharePlayers);
+  const playerSharesPath = join(lahmanDir, LAHMAN.files.awardsSharePlayers);
   if (existsSync(playerSharesPath)) {
     const entries: AwardShare[] = [];
     for await (const { row, headers } of streamCSV(playerSharesPath)) {
@@ -232,7 +224,7 @@ async function loadAwardShares(lahmanDir: string): Promise<number> {
   }
 
   // Manager award shares
-  const managerSharesPath = join(lahmanDir, LAHMAN_FILES.awardsShareManagers);
+  const managerSharesPath = join(lahmanDir, LAHMAN.files.awardsShareManagers);
   if (existsSync(managerSharesPath)) {
     const entries: AwardShare[] = [];
     for await (const { row, headers } of streamCSV(managerSharesPath)) {
@@ -270,7 +262,7 @@ async function loadAwardShares(lahmanDir: string): Promise<number> {
  * Load Salaries
  */
 async function loadSalaries(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.salaries);
+  const filePath = join(lahmanDir, LAHMAN.files.salaries);
   if (!existsSync(filePath)) {
     console.log('  Salaries.csv not found, skipping');
     return 0;
@@ -311,7 +303,7 @@ async function loadSalaries(lahmanDir: string): Promise<number> {
  * Load Schools
  */
 async function loadSchools(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.schools);
+  const filePath = join(lahmanDir, LAHMAN.files.schools);
   if (!existsSync(filePath)) {
     console.log('  Schools.csv not found, skipping');
     return 0;
@@ -346,7 +338,7 @@ async function loadSchools(lahmanDir: string): Promise<number> {
  * Load College Playing records
  */
 async function loadCollegePlaying(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.collegePlaying);
+  const filePath = join(lahmanDir, LAHMAN.files.collegePlaying);
   if (!existsSync(filePath)) {
     console.log('  CollegePlaying.csv not found, skipping');
     return 0;
@@ -386,7 +378,7 @@ async function loadCollegePlaying(lahmanDir: string): Promise<number> {
  * Load All-Star appearances
  */
 async function loadAllStarAppearances(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.allStarFull);
+  const filePath = join(lahmanDir, LAHMAN.files.allStarFull);
   if (!existsSync(filePath)) {
     console.log('  AllstarFull.csv not found, skipping');
     return 0;
@@ -430,7 +422,7 @@ async function loadAllStarAppearances(lahmanDir: string): Promise<number> {
  * Load Managers
  */
 async function loadManagers(lahmanDir: string): Promise<number> {
-  const filePath = join(lahmanDir, LAHMAN_FILES.managers);
+  const filePath = join(lahmanDir, LAHMAN.files.managers);
   if (!existsSync(filePath)) {
     console.log('  Managers.csv not found, skipping');
     return 0;
